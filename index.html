@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Updated Viewport for Mobile: Prevents zooming and ensures correct scaling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JumpFit: Motion Game</title>
+    
+    <!-- TensorFlow.js and Pose Detection Models -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none; /* Critical for mobile games */
+            -webkit-user-select: none; /* Disable text selection on iOS */
+            user-select: none;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            /* Fix for mobile browser address bars */
+            height: 100dvh; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
+
+        #webcam {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror effect */
+            z-index: 1;
+            opacity: 0.3; /* Slightly higher opacity for mobile visibility */
+        }
+
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .ui-layer {
+            position: absolute;
+            z-index: 20;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem; /* Prevent edge sticking on mobile */
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1.5rem;
+            border-radius: 1.5rem; /* Rounder for mobile feel */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+            max-width: 450px;
+            width: 100%; /* Mobile width */
+            pointer-events: auto;
+            border: 4px solid #3b82f6;
+            transition: all 0.3s ease;
+        }
+
+        /* Home Screen Specific Styles */
+        #home-screen {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(147, 51, 234, 0.9));
+            pointer-events: auto; /* Enable clicks */
+            cursor: pointer;
+        }
+        
+        .logo-container {
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Mobile specific adjustments for buttons */
+        .btn {
+            background: #3b82f6;
+            color: white;
+            padding: 1.25rem 1rem; /* Larger touch target */
+            border-radius: 1rem;
+            font-weight: 800;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            border: none;
+            margin-top: 1rem;
+            width: 100%;
+            display: block;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn-green { background: #22c55e; }
+        .btn-green:hover { background: #16a34a; }
+
+        .btn:active { transform: scale(0.96); }
+
+        .hud {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            z-index: 30;
+            font-family: monospace;
+            text-shadow: 2px 2px 0 #000;
+            pointer-events: none;
+            background: rgba(0,0,0,0.6);
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            /* Responsive Font Sizes */
+            font-size: 0.9rem; 
+        }
+
+        /* Scale HUD up on larger screens */
+        @media (min-width: 768px) {
+            .hud { font-size: 1.2rem; padding: 1rem; }
+            .card { padding: 2.5rem; }
+        }
+
+        .hud-row { margin-bottom: 0.25rem; }
+
+        .jump-indicator {
+            position: absolute;
+            bottom: 2rem;
+            right: 1.5rem;
+            z-index: 30;
+            width: 25px; /* Slightly wider for visibility on phone */
+            height: 120px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .jump-level {
+            width: 100%;
+            background: linear-gradient(to top, #22c55e, #86efac);
+            position: absolute;
+            bottom: 0;
+            transition: height 0.1s;
+        }
+
+        .status-pill {
+            background: rgba(0,0,0,0.8);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            color: #fbbf24;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        /* Character Select Styles */
+        .char-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .char-btn:hover {
+            transform: scale(1.05);
+        }
+        .char-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Animations */
+        @keyframes levelPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+        
+        #level-up-msg {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem; /* Adjusted for mobile */
+            font-weight: bold;
+            color: #fbbf24;
+            text-shadow: 0 0 20px #ef4444;
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            width: 100%;
+            text-align: center;
+        }
+        
+        @media (min-width: 768px) {
+            #level-up-msg { font-size: 5rem; }
+        }
+        
+        .animate-level-up { animation: levelPop 2s ease-out forwards; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <video id="webcam" playsinline autoplay muted></video>
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Score HUD -->
+    <div class="hud" id="hud" style="display: none;">
+        <div class="hud-row text-white font-bold text-xl md:text-2xl">SCORE: <span id="score">0</span></div>
+        <div class="hud-row text-green-400">CALORIES: <span id="calories">0.0</span></div>
+        <div class="hud-row text-yellow-400">LEVEL: <span id="level">1</span></div>
+        <div class="hud-row text-gray-400 text-xs mt-1">BEST: <span id="highscore">0</span></div>
+    </div>
+
+    <!-- Level Up Message -->
+    <div id="level-up-msg">LEVEL UP!</div>
+
+    <!-- Jump Threshold Meter -->
+    <div class="jump-indicator" id="jump-meter" style="display: none;">
+        <div class="jump-level" id="jump-level" style="height: 0%"></div>
+        <div style="position: absolute; bottom: 30%; width: 100%; border-top: 2px dashed red; opacity: 0.8;"></div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="ui-layer">
+        <div class="card">
+            <h1 class="text-3xl font-bold mb-2">JumpFit 🏃‍♂️</h1>
+            <div class="flex justify-center my-6">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500"></div>
+            </div>
+            <p id="loading-text" class="text-gray-600 font-medium">Initializing AI Model...</p>
+            <p class="text-xs text-gray-400 mt-4">For best results on mobile, use Safari or Chrome.</p>
+        </div>
+    </div>
+
+    <!-- Home Screen (Logo) -->
+    <div id="home-screen" class="ui-layer" style="display: none;" onclick="showMenu()">
+        <div class="logo-container text-center">
+            <!-- Reverted back to the original emoji logo -->
+            <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl border-4 border-yellow-400">
+                <span class="text-7xl">🏃‍♂️</span>
+            </div>
+            
+            <h1 class="text-7xl font-black text-white tracking-tighter" style="text-shadow: 4px 4px 0 #2563eb, 8px 8px 0 rgba(0,0,0,0.2);">
+                JUMP<span class="text-yellow-300">FIT</span>
+            </h1>
+            <p class="text-blue-100 text-xl mt-4 tracking-widest font-bold">MOTION GAMING</p>
+        </div>
+        <div class="mt-16 animate-pulse text-white text-2xl font-bold bg-black/30 px-8 py-3 rounded-full backdrop-blur-sm border border-white/30">
+            TAP TO START
+        </div>
+
+        <!-- Developer Information Column -->
+        <div class="absolute bottom-6 flex flex-col items-center justify-center text-white/90 bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-lg max-w-xs w-11/12 mx-auto">
+            <div class="text-[10px] font-bold text-yellow-300 uppercase tracking-widest mb-3 border-b border-white/10 pb-1 w-full text-center">
+                Developer Info
+            </div>
+            
+            <div class="flex items-center space-x-3 w-full justify-center mb-2">
+                <!-- Dev Avatar/Logo -->
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center font-bold text-xs border-2 border-white/20 shadow-inner">
+                    DEV
+                </div>
+                <!-- Dev Details -->
+                <div class="text-left">
+                    <p class="font-bold text-sm leading-tight">Your Studio Name</p>
+                    <a href="#" class="text-[11px] text-blue-200 hover:text-white transition-colors">@your_handle</a>
+                </div>
+            </div>
+
+            <p class="text-[10px] text-center mt-1 opacity-60">
+                v1.0.2 • Powered by TensorFlow.js
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="main-menu" class="ui-layer" style="display: none;">
+        <div class="card">
+            <h1 class="text-4xl font-extrabold mb-4 text-blue-600 tracking-tight">Game Mode</h1>
+            <p class="text-gray-600 mb-6 text-sm md:text-base">Select a mode and get moving!</p>
+            
+            <button onclick="selectGame('runner')" class="btn mb-4">
+                🏃‍♂️ Runner Mode
+                <span class="block text-xs md:text-sm font-normal opacity-80 mt-1">Jump obstacles & run fast</span>
+            </button>
+            
+            <button onclick="selectGame('hopper')" class="btn btn-green">
+                🚀 Sky Hopper
+                <span class="block text-xs md:text-sm font-normal opacity-80 mt-1">Move left/right & jump up!</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Character Selection Screen -->
+    <div id="character-select-screen" class="ui-layer" style="display: none;">
+        <div class="card">
+            <h2 class="text-2xl font-bold mb-4">Choose Your Hero</h2>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="selectCharacter('default')" class="char-btn p-3 rounded-xl border-2 border-yellow-400 bg-yellow-50 shadow-sm">
+                    <div class="w-10 h-10 bg-yellow-400 rounded mx-auto mb-2 border-2 border-black"></div>
+                    <div class="font-bold text-gray-800 text-sm">Athlete</div>
+                </button>
+                <button onclick="selectCharacter('ninja')" class="char-btn p-3 rounded-xl border-2 border-slate-800 bg-slate-100 shadow-sm">
+                    <div class="w-10 h-10 bg-slate-800 rounded mx-auto mb-2 border-2 border-red-500"></div>
+                    <div class="font-bold text-gray-800 text-sm">Ninja</div>
+                </button>
+                <button onclick="selectCharacter('alien')" class="char-btn p-3 rounded-xl border-2 border-green-500 bg-green-50 shadow-sm">
+                    <div class="w-10 h-10 bg-green-500 rounded mx-auto mb-2 border-2 border-green-800"></div>
+                    <div class="font-bold text-gray-800 text-sm">Alien</div>
+                </button>
+                <button onclick="selectCharacter('punk')" class="char-btn p-3 rounded-xl border-2 border-purple-500 bg-purple-50 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-600 rounded mx-auto mb-2 border-2 border-black"></div>
+                    <div class="font-bold text-gray-800 text-sm">Punk</div>
+                </button>
+            </div>
+            <button onclick="showMenu()" class="text-gray-500 text-sm hover:underline py-2">Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- Calibration Screen -->
+    <div id="calibration-screen" class="ui-layer" style="display: none;">
+        <div class="card">
+            <h2 class="text-2xl font-bold mb-3">Setup</h2>
+            <div class="bg-blue-50 p-4 rounded-lg mb-4 text-left text-sm md:text-base text-gray-700">
+                <ul class="list-disc pl-4 space-y-2">
+                    <li>Prop up your phone vertically.</li>
+                    <li>Step back (2-3 meters).</li>
+                    <li>Ensure your whole body is visible.</li>
+                </ul>
+            </div>
+            <div class="status-pill" id="calib-status">Looking for you...</div>
+            <br>
+            <button id="start-calib-btn" class="btn hidden animate-pulse">Start Game</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="ui-layer" style="display: none;">
+        <div class="card">
+            <h2 class="text-4xl font-bold text-red-500 mb-4">GAME OVER</h2>
+            <div class="grid grid-cols-2 gap-3 mb-6 text-left p-4 bg-gray-100 rounded-xl shadow-inner">
+                <div class="text-gray-600">Score</div>
+                <div class="font-bold text-right text-xl"><span id="final-score">0</span></div>
+                
+                <div class="text-gray-600">Level</div>
+                <div class="font-bold text-right text-xl"><span id="final-level">1</span></div>
+                
+                <div class="text-gray-600">Burned</div>
+                <div class="font-bold text-right text-xl text-green-600"><span id="final-calories">0</span></div>
+            </div>
+            <button id="menu-btn" class="btn">Main Menu</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+     * STATE MANAGEMENT
+     */
+    const STATE = {
+        LOADING: 0,
+        HOME: 0.5, // New state for Home/Logo screen
+        MENU: 1,
+        CHAR_SELECT: 2,
+        CALIBRATION: 3,
+        PLAYING: 4,
+        GAMEOVER: 5
+    };
+
+    let appState = STATE.LOADING;
+    let selectedGameMode = 'runner'; 
+    
+    // Character Configurations
+    const CHARACTERS = {
+        'default': { color: '#fbbf24', type: 'default', name: 'Athlete' },
+        'ninja': { color: '#1e293b', type: 'ninja', name: 'Ninja' }, 
+        'alien': { color: '#22c55e', type: 'alien', name: 'Alien' },
+        'punk': { color: '#9333ea', type: 'punk', name: 'Punk' }
+    };
+    let selectedCharacter = CHARACTERS['default'];
+
+    let detector;
+    let video;
+    let canvas, ctx;
+    
+    // Global Game Stats
+    let score = 0;
+    let highscore = 0;
+    let level = 1;
+    let calories = 0.0;
+
+    // AI & Motion Variables
+    let pose = null;
+    let baselineY = 0; 
+    let currentY = 0;
+    let currentX = 0; 
+    let isJumping = false;
+    let jumpThreshold = 30; 
+    
+    // -- RUNNER ENTITIES --
+    let runnerPlayer = {
+        y: 0,
+        dy: 0,
+        size: 50,
+        groundY: 0,
+        isGrounded: true,
+        jumpForce: 18,
+        gravity: 0.9,
+    };
+    let obstacles = [];
+    let gameSpeed = 6;
+    let runnerFrame = 0;
+
+    // -- HOPPER ENTITIES --
+    let hopperPlayer = {
+        x: 0,
+        y: 0,
+        dy: 0,
+        width: 40,
+        height: 40,
+        color: '#fbbf24',
+        isGrounded: false
+    };
+    let platforms = [];
+    let cameraY = 0;
+
+    // Level Config
+    const LEVELS = {
+        1: { speed: 6, name: "WARMUP" },
+        2: { speed: 7.5, name: "CARDIO" },
+        3: { speed: 9, name: "BURN" },
+        4: { speed: 11, name: "MAX" },
+        5: { speed: 13, name: "ELITE" }
+    };
+
+    /**
+     * INITIALIZATION
+     */
+    async function init() {
+        canvas = document.getElementById('game-canvas');
+        ctx = canvas.getContext('2d');
+        video = document.getElementById('webcam');
+        
+        resizeCanvas();
+        // Handle both standard resize and orientation changes
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeCanvas, 100); // Delay to allow browser layout update
+        });
+
+        try {
+            await setupCamera();
+            document.getElementById('loading-text').innerText = "Loading AI Model...";
+            
+            const detectorConfig = {modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING};
+            detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
+            
+            // Start Pose Loop immediately
+            detectPoseLoop();
+            gameLoop();
+
+            // Transition to Home Screen
+            document.getElementById('loading-screen').style.display = 'none';
+            showHome();
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById('loading-text').innerText = "Camera Error: " + err.message + ". Check permissions.";
+            document.getElementById('loading-text').classList.add('text-red-500');
+        }
+    }
+
+    async function setupCamera() {
+        // Mobile-optimized constraints
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        const constraints = {
+            video: {
+                facingMode: 'user', // Prefer front camera
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                frameRate: { ideal: 30 }
+            },
+            audio: false
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        
+        return new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+                video.width = video.videoWidth;
+                video.height = video.videoHeight;
+                resolve(video);
+            };
+        });
+    }
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        // Runner ground
+        runnerPlayer.groundY = canvas.height - 100;
+        runnerPlayer.y = runnerPlayer.groundY;
+        // Hopper Setup
+        hopperPlayer.y = canvas.height - 150;
+    }
+
+    // --- MENU & SCREEN LOGIC ---
+    
+    function showHome() {
+        appState = STATE.HOME;
+        // Hide all screens
+        const screens = ['loading-screen', 'main-menu', 'character-select-screen', 'calibration-screen', 'game-over-screen'];
+        screens.forEach(s => document.getElementById(s).style.display = 'none');
+        
+        // Hide HUD
+        document.getElementById('hud').style.display = 'none';
+        document.getElementById('jump-meter').style.display = 'none';
+        
+        // Show Home
+        document.getElementById('home-screen').style.display = 'flex';
+    }
+
+    window.showMenu = function() { // Made global to be called from onclick
+        appState = STATE.MENU;
+        document.getElementById('home-screen').style.display = 'none';
+        document.getElementById('main-menu').style.display = 'flex';
+        document.getElementById('character-select-screen').style.display = 'none';
+        document.getElementById('game-over-screen').style.display = 'none';
+        document.getElementById('hud').style.display = 'none';
+        document.getElementById('jump-meter').style.display = 'none';
+        document.getElementById('calibration-screen').style.display = 'none';
+    }
+
+    window.selectGame = function(mode) {
+        selectedGameMode = mode;
+        if (mode === 'runner') {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('character-select-screen').style.display = 'flex';
+            appState = STATE.CHAR_SELECT;
+        } else {
+            // Hopper mode skips char select
+            document.getElementById('main-menu').style.display = 'none';
+            enterCalibration();
+        }
+    }
+
+    window.selectCharacter = function(charKey) {
+        selectedCharacter = CHARACTERS[charKey];
+        document.getElementById('character-select-screen').style.display = 'none';
+        enterCalibration();
+    }
+
+    /**
+     * AI POSE DETECTION
+     */
+    async function detectPoseLoop() {
+        if (detector && video.readyState === 4) {
+            try {
+                const poses = await detector.estimatePoses(video);
+                if (poses && poses.length > 0) {
+                    pose = poses[0];
+                    processPose(pose);
+                } else {
+                    pose = null;
+                }
+            } catch (e) { console.warn(e); }
+        }
+        requestAnimationFrame(detectPoseLoop);
+    }
+
+    function processPose(pose) {
+        const nose = pose.keypoints.find(k => k.name === 'nose');
+        const leftS = pose.keypoints.find(k => k.name === 'left_shoulder');
+        const rightS = pose.keypoints.find(k => k.name === 'right_shoulder');
+
+        // Y Tracking (Jumps)
+        let ySum = 0, count = 0;
+        if (nose && nose.score > 0.3) { ySum += nose.y; count++; }
+        if (leftS && leftS.score > 0.3) { ySum += leftS.y; count++; }
+        if (rightS && rightS.score > 0.3) { ySum += rightS.y; count++; }
+
+        if (count > 0) {
+            const rawY = ySum / count;
+            currentY = currentY * 0.7 + rawY * 0.3; // Smooth Y
+
+            // Jump Detection
+            if (baselineY > 0) {
+                const diff = baselineY - currentY; 
+                // UI Meter
+                const pct = Math.min(100, Math.max(0, (diff / (jumpThreshold * 2)) * 100));
+                document.getElementById('jump-level').style.height = `${pct}%`;
+                
+                if (appState === STATE.PLAYING && diff > jumpThreshold) {
+                    handlePhysicalJump();
+                }
+            }
+        }
+
+        // X Tracking (Lateral Movement) - Mainly for Hopper
+        if (nose && nose.score > 0.3) {
+            // Mirror X because CSS scales video by -1
+            let rawX = video.width - nose.x; 
+            currentX = currentX * 0.8 + rawX * 0.2; // Smooth X
+        }
+    }
+
+    function enterCalibration() {
+        appState = STATE.CALIBRATION;
+        document.getElementById('calibration-screen').style.display = 'flex';
+        const statusEl = document.getElementById('calib-status');
+        const btn = document.getElementById('start-calib-btn');
+
+        const checkInterval = setInterval(() => {
+            if (pose) {
+                statusEl.innerText = "Person Detected!";
+                statusEl.style.color = "#4ade80"; 
+                btn.classList.remove('hidden');
+            } else {
+                statusEl.innerText = "Looking for you...";
+                statusEl.style.color = "#fbbf24"; 
+                btn.classList.add('hidden');
+            }
+        }, 500);
+
+        btn.onclick = () => {
+            clearInterval(checkInterval);
+            statusEl.innerText = "Stand Still!";
+            btn.classList.add('hidden');
+            
+            let readings = [];
+            const calibInterval = setInterval(() => {
+                if (pose) readings.push(currentY);
+            }, 50);
+
+            setTimeout(() => {
+                clearInterval(calibInterval);
+                if (readings.length > 0) {
+                    baselineY = readings.reduce((a,b)=>a+b) / readings.length;
+                    jumpThreshold = Math.max(20, video.height * 0.08); 
+                    startGame();
+                } else {
+                    statusEl.innerText = "Failed. Try again.";
+                    btn.classList.remove('hidden');
+                }
+            }, 2000);
+        };
+    }
+
+    function startGame() {
+        appState = STATE.PLAYING;
+        document.getElementById('calibration-screen').style.display = 'none';
+        document.getElementById('hud').style.display = 'block';
+        document.getElementById('jump-meter').style.display = 'block';
+        
+        score = 0;
+        level = 1;
+        calories = 0.0;
+        updateHUD();
+
+        if (selectedGameMode === 'runner') {
+            initRunner();
+        } else {
+            initHopper();
+        }
+    }
+
+    function handlePhysicalJump() {
+        calories += 0.2;
+        updateHUD();
+
+        if (selectedGameMode === 'runner') {
+            if (runnerPlayer.isGrounded) {
+                runnerPlayer.dy = -runnerPlayer.jumpForce;
+                runnerPlayer.isGrounded = false;
+            }
+        } else if (selectedGameMode === 'hopper') {
+            // In Hopper, user controls jump timing
+            if (hopperPlayer.isGrounded) {
+                hopperPlayer.dy = -18; // Fixed jump force
+                hopperPlayer.isGrounded = false;
+            }
+        }
+    }
+
+    /**
+     * GAME MODE: RUNNER
+     */
+    function initRunner() {
+        gameSpeed = LEVELS[1].speed;
+        obstacles = [];
+        runnerPlayer.y = runnerPlayer.groundY;
+        runnerPlayer.dy = 0;
+        runnerFrame = 0;
+    }
+
+    function updateRunner() {
+        // Physics
+        runnerPlayer.dy += runnerPlayer.gravity;
+        runnerPlayer.y += runnerPlayer.dy;
+        if (runnerPlayer.y > runnerPlayer.groundY) {
+            runnerPlayer.y = runnerPlayer.groundY;
+            runnerPlayer.dy = 0;
+            runnerPlayer.isGrounded = true;
+        }
+
+        // Spawning
+        runnerFrame++;
+        let spawnRate = Math.max(50, 150 - (level * 10) - (score/2));
+        if (runnerFrame % Math.floor(spawnRate) === 0) {
+            const type = Math.random() > (0.6 - (level * 0.05)) ? 'rock' : 'bird';
+            obstacles.push({
+                x: canvas.width,
+                y: type === 'bird' ? runnerPlayer.groundY - 90 : runnerPlayer.groundY, 
+                width: 50,
+                height: 50,
+                type: type,
+                passed: false
+            });
+        }
+
+        // Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let obs = obstacles[i];
+            obs.x -= gameSpeed;
+
+            // Collision
+            const pHit = {x: 100 + 10, y: runnerPlayer.y - runnerPlayer.size + 10, w: runnerPlayer.size - 20, h: runnerPlayer.size - 20};
+            const oHit = {x: obs.x + 5, y: obs.y - obs.height + 5, w: obs.width - 10, h: obs.height - 10};
+
+            if (pHit.x < oHit.x + oHit.w && pHit.x + pHit.w > oHit.x &&
+                pHit.y < oHit.y + oHit.h && pHit.y + pHit.h > oHit.y) {
+                gameOver();
+            }
+
+            // Scoring
+            if (!obs.passed && obs.x + obs.width < 100) {
+                score++;
+                obs.passed = true;
+                checkLevelUp();
+                updateHUD();
+            }
+            if (obs.x + obs.width < 0) obstacles.splice(i, 1);
+        }
+    }
+
+    function drawRunner() {
+        // Floor
+        ctx.fillStyle = '#4b5563';
+        ctx.fillRect(0, runnerPlayer.groundY, canvas.width, canvas.height - runnerPlayer.groundY);
+        const levelColors = ['#22c55e', '#22c55e', '#eab308', '#f97316', '#ef4444'];
+        ctx.fillStyle = levelColors[Math.min(level-1, 4)]; 
+        ctx.fillRect(0, runnerPlayer.groundY, canvas.width, 20);
+
+        // Player Body
+        ctx.fillStyle = selectedCharacter.color;
+        let stretch = 0;
+        if (!runnerPlayer.isGrounded) stretch = 10;
+        else if (Math.abs(runnerPlayer.dy) > 1) stretch = -5;
+        const pH = runnerPlayer.size + stretch;
+        const pW = runnerPlayer.size - stretch;
+        
+        const px = 100 + (runnerPlayer.size - pW)/2;
+        const py = runnerPlayer.y - pH;
+        
+        ctx.fillRect(px, py, pW, pH);
+
+        // Character Specific Details
+        if (selectedCharacter.type === 'default') {
+            // Eyes
+            ctx.fillStyle = 'black';
+            ctx.fillRect(px + pW - 15, py + 10, 5, 5);
+            ctx.fillRect(px + pW - 35, py + 10, 5, 5);
+            // Headband
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(px, py + 5, pW, 5);
+        } 
+        else if (selectedCharacter.type === 'ninja') {
+            // Visor (Red)
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(px + 5, py + 12, pW - 10, 8);
+        }
+        else if (selectedCharacter.type === 'alien') {
+            // Big Black Eyes
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.ellipse(px + pW - 15, py + 15, 6, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(px + pW - 35, py + 15, 6, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        else if (selectedCharacter.type === 'punk') {
+            // Mohawk
+            ctx.fillStyle = '#ec4899'; // Pink
+            ctx.beginPath();
+            ctx.moveTo(px + pW/2 - 5, py);
+            ctx.lineTo(px + pW/2 + 5, py);
+            ctx.lineTo(px + pW/2, py - 15);
+            ctx.fill();
+             // Eyes
+            ctx.fillStyle = 'black';
+            ctx.fillRect(px + pW - 15, py + 10, 5, 5);
+            ctx.fillRect(px + pW - 35, py + 10, 5, 5);
+        }
+
+        // Obstacles
+        obstacles.forEach(obs => {
+            if (obs.type === 'rock') {
+                ctx.fillStyle = '#dc2626';
+                ctx.beginPath();
+                ctx.moveTo(obs.x, obs.y);
+                ctx.lineTo(obs.x + obs.width/2, obs.y - obs.height);
+                ctx.lineTo(obs.x + obs.width, obs.y);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(obs.x, obs.y - obs.height, obs.width, obs.height/2);
+            }
+        });
+    }
+
+    /**
+     * GAME MODE: SKY HOPPER
+     */
+    function initHopper() {
+        hopperPlayer.y = canvas.height - 150;
+        hopperPlayer.x = canvas.width / 2;
+        hopperPlayer.dy = 0;
+        hopperPlayer.isGrounded = false;
+        cameraY = 0;
+        
+        // Generate initial platforms
+        platforms = [];
+        // Ground platform
+        platforms.push({x: 0, y: canvas.height - 50, w: canvas.width, h: 50});
+        
+        // Generate random platforms going up
+        for (let i = 1; i < 20; i++) {
+            spawnPlatform(canvas.height - 50 - (i * 120));
+        }
+    }
+
+    function spawnPlatform(y) {
+        const w = Math.random() * 100 + 100; // width 100-200
+        const x = Math.random() * (canvas.width - w);
+        platforms.push({x, y, w, h: 20});
+    }
+
+    function updateHopper() {
+        // Horizontal Movement (Mapped to Body)
+        // Map currentX (0-640 video space) to Canvas Width
+        const targetX = (currentX / video.width) * canvas.width;
+        // Lerp for smoothness
+        hopperPlayer.x = hopperPlayer.x * 0.9 + targetX * 0.1;
+
+        // Physics
+        hopperPlayer.dy += 0.6; // Gravity
+        hopperPlayer.y += hopperPlayer.dy;
+
+        // Platform Collision
+        hopperPlayer.isGrounded = false;
+        if (hopperPlayer.dy > 0) { // Only check when falling
+            platforms.forEach(p => {
+                if (hopperPlayer.y + hopperPlayer.height > p.y &&
+                    hopperPlayer.y < p.y + p.h &&
+                    hopperPlayer.x + hopperPlayer.width > p.x &&
+                    hopperPlayer.x < p.x + p.w) {
+                        // Landed
+                        hopperPlayer.isGrounded = true;
+                        hopperPlayer.dy = 0;
+                        hopperPlayer.y = p.y - hopperPlayer.height;
+                }
+            });
+        }
+
+        // Camera Scroll / Infinite Generation
+        const threshold = canvas.height * 0.4;
+        if (hopperPlayer.y < threshold) {
+            const diff = threshold - hopperPlayer.y;
+            hopperPlayer.y += diff;
+            platforms.forEach(p => p.y += diff);
+            score += Math.floor(diff/10); // Score based on height
+            updateHUD();
+            
+            // Remove old platforms
+            platforms = platforms.filter(p => p.y < canvas.height);
+            // Add new platforms
+            const highestP = platforms.reduce((min, p) => p.y < min ? p.y : min, canvas.height);
+            if (highestP > 100) {
+                spawnPlatform(highestP - 120);
+            }
+        }
+
+        // Death Check
+        if (hopperPlayer.y > canvas.height) {
+            gameOver();
+        }
+    }
+
+    function drawHopper() {
+        // Draw Platforms
+        ctx.fillStyle = '#60a5fa'; // Blue platforms
+        platforms.forEach(p => {
+            ctx.fillRect(p.x, p.y, p.w, p.h);
+            // Detail
+            ctx.fillStyle = '#2563eb';
+            ctx.fillRect(p.x, p.y + p.h - 5, p.w, 5);
+            ctx.fillStyle = '#60a5fa'; // Reset
+        });
+
+        // Draw Player (Using default style for Hopper for now)
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(hopperPlayer.x, hopperPlayer.y, hopperPlayer.width, hopperPlayer.height);
+        
+        // Eyes
+        ctx.fillStyle = 'black';
+        ctx.fillRect(hopperPlayer.x + 10, hopperPlayer.y + 10, 5, 5);
+        ctx.fillRect(hopperPlayer.x + 25, hopperPlayer.y + 10, 5, 5);
+    }
+
+
+    /**
+     * SHARED GAME LOGIC
+     */
+
+    function checkLevelUp() {
+        const nextLevel = level + 1;
+        if (score >= level * 20 && LEVELS[nextLevel]) { // Slower leveling
+            level = nextLevel;
+            gameSpeed = LEVELS[level].speed;
+            
+            const msg = document.getElementById('level-up-msg');
+            msg.innerText = `LEVEL ${level}!`;
+            msg.classList.remove('animate-level-up');
+            void msg.offsetWidth;
+            msg.classList.add('animate-level-up');
+            updateHUD();
+        }
+    }
+
+    function gameLoop() {
+        if (appState === STATE.PLAYING) {
+            if (selectedGameMode === 'runner') updateRunner();
+            else updateHopper();
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Calibration Line
+        if (appState === STATE.CALIBRATION && pose) {
+            const videoRatio = canvas.width / video.width;
+            const drawY = currentY * videoRatio; 
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, drawY);
+            ctx.lineTo(canvas.width, drawY);
+            ctx.stroke();
+        }
+
+        if (selectedGameMode === 'runner') drawRunner();
+        else if (appState === STATE.PLAYING || appState === STATE.GAMEOVER) drawHopper();
+        
+        requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver() {
+        appState = STATE.GAMEOVER;
+        if (score > highscore) {
+            highscore = score;
+            localStorage.setItem('jumpfit_highscore', highscore);
+        }
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('final-level').innerText = level;
+        document.getElementById('final-calories').innerText = calories.toFixed(1) + ' kcal';
+        document.getElementById('highscore').innerText = highscore;
+        document.getElementById('game-over-screen').style.display = 'flex';
+        document.getElementById('jump-meter').style.display = 'none';
+    }
+
+    function updateHUD() {
+        document.getElementById('score').innerText = score;
+        document.getElementById('level').innerText = level;
+        document.getElementById('calories').innerText = calories.toFixed(1);
+        document.getElementById('highscore').innerText = highscore;
+    }
+
+    // Event Listeners
+    document.getElementById('menu-btn').addEventListener('click', () => {
+        showMenu(); 
+    });
+
+    // Handle initial load
+    window.onload = () => {
+        const saved = localStorage.getItem('jumpfit_highscore');
+        if (saved) highscore = parseInt(saved);
+        updateHUD();
+        init();
+    };
+
+</script>
+</body>
+</html>

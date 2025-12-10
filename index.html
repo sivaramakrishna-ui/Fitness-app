@@ -258,7 +258,6 @@
     <!-- Home Screen (Logo) -->
     <div id="home-screen" class="ui-layer" style="display: none;" onclick="showMenu()">
         <div class="logo-container text-center">
-            <!-- Reverted back to the original emoji logo -->
             <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl border-4 border-yellow-400">
                 <span class="text-7xl">🏃‍♂️</span>
             </div>
@@ -270,29 +269,6 @@
         </div>
         <div class="mt-16 animate-pulse text-white text-2xl font-bold bg-black/30 px-8 py-3 rounded-full backdrop-blur-sm border border-white/30">
             TAP TO START
-        </div>
-
-        <!-- Developer Information Column -->
-        <div class="absolute bottom-6 flex flex-col items-center justify-center text-white/90 bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-lg max-w-xs w-11/12 mx-auto">
-            <div class="text-[10px] font-bold text-yellow-300 uppercase tracking-widest mb-3 border-b border-white/10 pb-1 w-full text-center">
-                Developer Info
-            </div>
-            
-            <div class="flex items-center space-x-3 w-full justify-center mb-2">
-                <!-- Dev Avatar/Logo -->
-                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center font-bold text-xs border-2 border-white/20 shadow-inner">
-                    DEV
-                </div>
-                <!-- Dev Details -->
-                <div class="text-left">
-                    <p class="font-bold text-sm leading-tight">Your Studio Name</p>
-                    <a href="#" class="text-[11px] text-blue-200 hover:text-white transition-colors">@your_handle</a>
-                </div>
-            </div>
-
-            <p class="text-[10px] text-center mt-1 opacity-60">
-                v1.0.2 • Powered by TensorFlow.js
-            </p>
         </div>
     </div>
 
@@ -382,7 +358,7 @@
      */
     const STATE = {
         LOADING: 0,
-        HOME: 0.5, // New state for Home/Logo screen
+        HOME: 0.5,
         MENU: 1,
         CHAR_SELECT: 2,
         CALIBRATION: 3,
@@ -545,7 +521,7 @@
         document.getElementById('home-screen').style.display = 'flex';
     }
 
-    window.showMenu = function() { // Made global to be called from onclick
+    window.showMenu = function() {
         appState = STATE.MENU;
         document.getElementById('home-screen').style.display = 'none';
         document.getElementById('main-menu').style.display = 'flex';
@@ -735,7 +711,8 @@
             const type = Math.random() > (0.6 - (level * 0.05)) ? 'rock' : 'bird';
             obstacles.push({
                 x: canvas.width,
-                y: type === 'bird' ? runnerPlayer.groundY - 90 : runnerPlayer.groundY, 
+                // Lowered bird obstacle so users can jump over it properly
+                y: type === 'bird' ? runnerPlayer.groundY - 50 : runnerPlayer.groundY, 
                 width: 50,
                 height: 50,
                 type: type,
@@ -831,14 +808,14 @@
         // Obstacles
         obstacles.forEach(obs => {
             if (obs.type === 'rock') {
-                ctx.fillStyle = '#dc2626';
+                ctx.fillStyle = '#dc2626'; // Red Rock
                 ctx.beginPath();
                 ctx.moveTo(obs.x, obs.y);
                 ctx.lineTo(obs.x + obs.width/2, obs.y - obs.height);
                 ctx.lineTo(obs.x + obs.width, obs.y);
                 ctx.fill();
             } else {
-                ctx.fillStyle = '#ef4444';
+                ctx.fillStyle = '#ef4444'; // Red Rectangle (Bird)
                 ctx.fillRect(obs.x, obs.y - obs.height, obs.width, obs.height/2);
             }
         });

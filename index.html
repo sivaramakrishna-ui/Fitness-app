@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Updated Viewport for Mobile: Prevents zooming and ensures correct scaling -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>JumpFit: Motion Game</title>
     
@@ -19,10 +18,10 @@
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #1a1a1a;
+            background-color: #0f172a;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none; /* Critical for mobile games */
-            -webkit-user-select: none; /* Disable text selection on iOS */
+            touch-action: none;
+            -webkit-user-select: none;
             user-select: none;
         }
         
@@ -30,7 +29,6 @@
             position: relative;
             width: 100vw;
             height: 100vh;
-            /* Fix for mobile browser address bars */
             height: 100dvh; 
             display: flex;
             justify-content: center;
@@ -45,9 +43,11 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); /* Mirror effect */
+            transform: scaleX(-1);
             z-index: 1;
-            opacity: 0.3; /* Slightly higher opacity for mobile visibility */
+            /* UPDATED: Increased opacity so the player is clearly visible */
+            opacity: 0.6; 
+            filter: grayscale(30%) contrast(120%); /* Cool look for space theme */
         }
 
         #game-canvas {
@@ -67,44 +67,39 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 1rem; /* Prevent edge sticking on mobile */
+            padding: 1rem;
             box-sizing: border-box;
         }
 
         .card {
             background: rgba(255, 255, 255, 0.95);
             padding: 1.5rem;
-            border-radius: 1.5rem; /* Rounder for mobile feel */
+            border-radius: 1.5rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             text-align: center;
             max-width: 450px;
-            width: 100%; /* Mobile width */
+            width: 100%;
             pointer-events: auto;
             border: 4px solid #3b82f6;
             transition: all 0.3s ease;
         }
 
-        /* Home Screen Specific Styles */
         #home-screen {
             background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(147, 51, 234, 0.9));
-            pointer-events: auto; /* Enable clicks */
+            pointer-events: auto;
             cursor: pointer;
         }
         
-        .logo-container {
-            animation: bounce 2s infinite;
-        }
-
+        .logo-container { animation: bounce 2s infinite; }
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
 
-        /* Mobile specific adjustments for buttons */
         .btn {
             background: #3b82f6;
             color: white;
-            padding: 1.25rem 1rem; /* Larger touch target */
+            padding: 1.25rem 1rem;
             border-radius: 1rem;
             font-weight: 800;
             font-size: 1.1rem;
@@ -119,7 +114,6 @@
         
         .btn-green { background: #22c55e; }
         .btn-green:hover { background: #16a34a; }
-
         .btn:active { transform: scale(0.96); }
 
         .hud {
@@ -134,16 +128,12 @@
             padding: 0.75rem;
             border-radius: 0.75rem;
             border: 1px solid rgba(255,255,255,0.2);
-            /* Responsive Font Sizes */
             font-size: 0.9rem; 
         }
-
-        /* Scale HUD up on larger screens */
         @media (min-width: 768px) {
             .hud { font-size: 1.2rem; padding: 1rem; }
             .card { padding: 2.5rem; }
         }
-
         .hud-row { margin-bottom: 0.25rem; }
 
         .jump-indicator {
@@ -151,7 +141,7 @@
             bottom: 2rem;
             right: 1.5rem;
             z-index: 30;
-            width: 25px; /* Slightly wider for visibility on phone */
+            width: 25px;
             height: 120px;
             background: rgba(255,255,255,0.2);
             border: 2px solid white;
@@ -159,7 +149,6 @@
             overflow: hidden;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
-
         .jump-level {
             width: 100%;
             background: linear-gradient(to top, #22c55e, #86efac);
@@ -167,7 +156,6 @@
             bottom: 0;
             transition: height 0.1s;
         }
-
         .status-pill {
             background: rgba(0,0,0,0.8);
             padding: 0.5rem 1rem;
@@ -179,16 +167,9 @@
         }
 
         /* Character Select Styles */
-        .char-btn {
-            position: relative;
-            overflow: hidden;
-        }
-        .char-btn:hover {
-            transform: scale(1.05);
-        }
-        .char-btn:active {
-            transform: scale(0.95);
-        }
+        .char-btn { position: relative; overflow: hidden; }
+        .char-btn:hover { transform: scale(1.05); }
+        .char-btn:active { transform: scale(0.95); }
 
         /* Animations */
         @keyframes levelPop {
@@ -202,7 +183,7 @@
             top: 30%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 3rem; /* Adjusted for mobile */
+            font-size: 3rem;
             font-weight: bold;
             color: #fbbf24;
             text-shadow: 0 0 20px #ef4444;
@@ -212,11 +193,7 @@
             width: 100%;
             text-align: center;
         }
-        
-        @media (min-width: 768px) {
-            #level-up-msg { font-size: 5rem; }
-        }
-        
+        @media (min-width: 768px) { #level-up-msg { font-size: 5rem; } }
         .animate-level-up { animation: levelPop 2s ease-out forwards; }
     </style>
 </head>
@@ -234,10 +211,8 @@
         <div class="hud-row text-gray-400 text-xs mt-1">BEST: <span id="highscore">0</span></div>
     </div>
 
-    <!-- Level Up Message -->
     <div id="level-up-msg">LEVEL UP!</div>
 
-    <!-- Jump Threshold Meter -->
     <div class="jump-indicator" id="jump-meter" style="display: none;">
         <div class="jump-level" id="jump-level" style="height: 0%"></div>
         <div style="position: absolute; bottom: 30%; width: 100%; border-top: 2px dashed red; opacity: 0.8;"></div>
@@ -251,17 +226,15 @@
                 <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500"></div>
             </div>
             <p id="loading-text" class="text-gray-600 font-medium">Initializing AI Model...</p>
-            <p class="text-xs text-gray-400 mt-4">For best results on mobile, use Safari or Chrome.</p>
         </div>
     </div>
 
-    <!-- Home Screen (Logo) -->
+    <!-- Home Screen -->
     <div id="home-screen" class="ui-layer" style="display: none;" onclick="showMenu()">
         <div class="logo-container text-center">
             <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl border-4 border-yellow-400">
                 <span class="text-7xl">🏃‍♂️</span>
             </div>
-            
             <h1 class="text-7xl font-black text-white tracking-tighter" style="text-shadow: 4px 4px 0 #2563eb, 8px 8px 0 rgba(0,0,0,0.2);">
                 JUMP<span class="text-yellow-300">FIT</span>
             </h1>
@@ -277,12 +250,10 @@
         <div class="card">
             <h1 class="text-4xl font-extrabold mb-4 text-blue-600 tracking-tight">Game Mode</h1>
             <p class="text-gray-600 mb-6 text-sm md:text-base">Select a mode and get moving!</p>
-            
             <button onclick="selectGame('runner')" class="btn mb-4">
                 🏃‍♂️ Runner Mode
                 <span class="block text-xs md:text-sm font-normal opacity-80 mt-1">Jump obstacles & run fast</span>
             </button>
-            
             <button onclick="selectGame('hopper')" class="btn btn-green">
                 🚀 Sky Hopper
                 <span class="block text-xs md:text-sm font-normal opacity-80 mt-1">Move left/right & jump up!</span>
@@ -290,7 +261,7 @@
         </div>
     </div>
 
-    <!-- Character Selection Screen -->
+    <!-- Character Select -->
     <div id="character-select-screen" class="ui-layer" style="display: none;">
         <div class="card">
             <h2 class="text-2xl font-bold mb-4">Choose Your Hero</h2>
@@ -316,7 +287,7 @@
         </div>
     </div>
 
-    <!-- Calibration Screen -->
+    <!-- Calibration -->
     <div id="calibration-screen" class="ui-layer" style="display: none;">
         <div class="card">
             <h2 class="text-2xl font-bold mb-3">Setup</h2>
@@ -333,17 +304,15 @@
         </div>
     </div>
 
-    <!-- Game Over Screen -->
+    <!-- Game Over -->
     <div id="game-over-screen" class="ui-layer" style="display: none;">
         <div class="card">
             <h2 class="text-4xl font-bold text-red-500 mb-4">GAME OVER</h2>
             <div class="grid grid-cols-2 gap-3 mb-6 text-left p-4 bg-gray-100 rounded-xl shadow-inner">
                 <div class="text-gray-600">Score</div>
                 <div class="font-bold text-right text-xl"><span id="final-score">0</span></div>
-                
                 <div class="text-gray-600">Level</div>
                 <div class="font-bold text-right text-xl"><span id="final-level">1</span></div>
-                
                 <div class="text-gray-600">Burned</div>
                 <div class="font-bold text-right text-xl text-green-600"><span id="final-calories">0</span></div>
             </div>
@@ -353,23 +322,9 @@
 </div>
 
 <script>
-    /**
-     * STATE MANAGEMENT
-     */
-    const STATE = {
-        LOADING: 0,
-        HOME: 0.5,
-        MENU: 1,
-        CHAR_SELECT: 2,
-        CALIBRATION: 3,
-        PLAYING: 4,
-        GAMEOVER: 5
-    };
-
+    const STATE = { LOADING: 0, HOME: 0.5, MENU: 1, CHAR_SELECT: 2, CALIBRATION: 3, PLAYING: 4, GAMEOVER: 5 };
     let appState = STATE.LOADING;
     let selectedGameMode = 'runner'; 
-    
-    // Character Configurations
     const CHARACTERS = {
         'default': { color: '#fbbf24', type: 'default', name: 'Athlete' },
         'ninja': { color: '#1e293b', type: 'ninja', name: 'Ninja' }, 
@@ -377,116 +332,86 @@
         'punk': { color: '#9333ea', type: 'punk', name: 'Punk' }
     };
     let selectedCharacter = CHARACTERS['default'];
-
-    let detector;
-    let video;
-    let canvas, ctx;
-    
-    // Global Game Stats
-    let score = 0;
-    let highscore = 0;
-    let level = 1;
-    let calories = 0.0;
-
-    // AI & Motion Variables
-    let pose = null;
-    let baselineY = 0; 
-    let currentY = 0;
-    let currentX = 0; 
-    let isJumping = false;
+    let detector, video, canvas, ctx;
+    let score = 0, highscore = 0, level = 1, calories = 0.0;
+    // UPDATED: Added jumpCooldown
+    let pose = null, baselineY = 0, currentY = 0, currentX = 0, jumpCooldown = 0;
     let jumpThreshold = 30; 
     
-    // -- RUNNER ENTITIES --
-    let runnerPlayer = {
-        y: 0,
-        dy: 0,
-        size: 50,
-        groundY: 0,
-        isGrounded: true,
-        jumpForce: 18,
-        gravity: 0.9,
-    };
+    // Runner Entities
+    let runnerPlayer = { y: 0, dy: 0, size: 50, groundY: 0, isGrounded: true, jumpForce: 18, gravity: 0.9 };
     let obstacles = [];
-    let gameSpeed = 6;
+    let gameSpeed = 8; // Higher base speed
     let runnerFrame = 0;
+    let groundOffset = 0;
+    let bgParticles = []; 
+    let mountains = [];
+    let mountainOffset = 0;
 
-    // -- HOPPER ENTITIES --
-    let hopperPlayer = {
-        x: 0,
-        y: 0,
-        dy: 0,
-        width: 40,
-        height: 40,
-        color: '#fbbf24',
-        isGrounded: false
-    };
+    // Hopper Entities
+    let hopperPlayer = { x: 0, y: 0, dy: 0, width: 40, height: 40, color: '#fbbf24', isGrounded: false };
     let platforms = [];
-    let cameraY = 0;
 
-    // Level Config
+    // Faster Levels
     const LEVELS = {
-        1: { speed: 6, name: "WARMUP" },
-        2: { speed: 7.5, name: "CARDIO" },
-        3: { speed: 9, name: "BURN" },
-        4: { speed: 11, name: "MAX" },
-        5: { speed: 13, name: "ELITE" }
+        1: { speed: 10, name: "WARMUP" },
+        2: { speed: 13, name: "CARDIO" },
+        3: { speed: 17, name: "BURN" },
+        4: { speed: 22, name: "MAX" },
+        5: { speed: 28, name: "ELITE" }
     };
 
-    /**
-     * INITIALIZATION
-     */
     async function init() {
         canvas = document.getElementById('game-canvas');
         ctx = canvas.getContext('2d');
         video = document.getElementById('webcam');
-        
         resizeCanvas();
-        // Handle both standard resize and orientation changes
         window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('orientationchange', () => {
-            setTimeout(resizeCanvas, 100); // Delay to allow browser layout update
-        });
+        window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
+
+        // Speed Lines Init
+        for(let i=0; i<40; i++) {
+            bgParticles.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                w: Math.random() * 40 + 10,
+                s: Math.random() * 2 + 1 
+            });
+        }
+        // Parallax Mountains Init
+        generateMountains();
 
         try {
             await setupCamera();
             document.getElementById('loading-text').innerText = "Loading AI Model...";
-            
             const detectorConfig = {modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING};
             detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
-            
-            // Start Pose Loop immediately
             detectPoseLoop();
             gameLoop();
-
-            // Transition to Home Screen
             document.getElementById('loading-screen').style.display = 'none';
             showHome();
-
         } catch (err) {
             console.error(err);
-            document.getElementById('loading-text').innerText = "Camera Error: " + err.message + ". Check permissions.";
-            document.getElementById('loading-text').classList.add('text-red-500');
+            document.getElementById('loading-text').innerText = "Camera Error. Check permissions.";
+        }
+    }
+
+    function generateMountains() {
+        mountains = [];
+        let x = -200;
+        while(x < 3000) { // Large buffer
+            const w = Math.random() * 200 + 150;
+            const h = Math.random() * 150 + 50;
+            mountains.push({x, w, h});
+            x += w - 50; // Overlap
         }
     }
 
     async function setupCamera() {
-        // Mobile-optimized constraints
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        const constraints = {
-            video: {
-                facingMode: 'user', // Prefer front camera
-                width: { ideal: 640 },
-                height: { ideal: 480 },
-                frameRate: { ideal: 30 }
-            },
-            audio: false
-        };
-
+        const constraints = { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }, audio: false };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
-        
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             video.onloadedmetadata = () => {
                 video.width = video.videoWidth;
                 video.height = video.videoHeight;
@@ -498,26 +423,14 @@
     function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        // Runner ground
         runnerPlayer.groundY = canvas.height - 100;
         runnerPlayer.y = runnerPlayer.groundY;
-        // Hopper Setup
         hopperPlayer.y = canvas.height - 150;
     }
 
-    // --- MENU & SCREEN LOGIC ---
-    
     function showHome() {
         appState = STATE.HOME;
-        // Hide all screens
-        const screens = ['loading-screen', 'main-menu', 'character-select-screen', 'calibration-screen', 'game-over-screen'];
-        screens.forEach(s => document.getElementById(s).style.display = 'none');
-        
-        // Hide HUD
-        document.getElementById('hud').style.display = 'none';
-        document.getElementById('jump-meter').style.display = 'none';
-        
-        // Show Home
+        ['loading-screen', 'main-menu', 'character-select-screen', 'calibration-screen', 'game-over-screen', 'hud', 'jump-meter'].forEach(id => document.getElementById(id).style.display = 'none');
         document.getElementById('home-screen').style.display = 'flex';
     }
 
@@ -525,11 +438,8 @@
         appState = STATE.MENU;
         document.getElementById('home-screen').style.display = 'none';
         document.getElementById('main-menu').style.display = 'flex';
-        document.getElementById('character-select-screen').style.display = 'none';
-        document.getElementById('game-over-screen').style.display = 'none';
-        document.getElementById('hud').style.display = 'none';
-        document.getElementById('jump-meter').style.display = 'none';
-        document.getElementById('calibration-screen').style.display = 'none';
+        // reset others just in case
+        ['character-select-screen', 'game-over-screen', 'hud', 'jump-meter', 'calibration-screen'].forEach(id => document.getElementById(id).style.display = 'none');
     }
 
     window.selectGame = function(mode) {
@@ -539,7 +449,6 @@
             document.getElementById('character-select-screen').style.display = 'flex';
             appState = STATE.CHAR_SELECT;
         } else {
-            // Hopper mode skips char select
             document.getElementById('main-menu').style.display = 'none';
             enterCalibration();
         }
@@ -551,58 +460,62 @@
         enterCalibration();
     }
 
-    /**
-     * AI POSE DETECTION
-     */
     async function detectPoseLoop() {
         if (detector && video.readyState === 4) {
             try {
                 const poses = await detector.estimatePoses(video);
-                if (poses && poses.length > 0) {
-                    pose = poses[0];
-                    processPose(pose);
-                } else {
-                    pose = null;
-                }
-            } catch (e) { console.warn(e); }
+                if (poses && poses.length > 0) processPose(poses[0]);
+            } catch (e) {}
         }
         requestAnimationFrame(detectPoseLoop);
     }
 
-    function processPose(pose) {
+    function processPose(poseData) {
+        pose = poseData;
         const nose = pose.keypoints.find(k => k.name === 'nose');
         const leftS = pose.keypoints.find(k => k.name === 'left_shoulder');
         const rightS = pose.keypoints.find(k => k.name === 'right_shoulder');
-
-        // Y Tracking (Jumps)
         let ySum = 0, count = 0;
-        if (nose && nose.score > 0.3) { ySum += nose.y; count++; }
-        if (leftS && leftS.score > 0.3) { ySum += leftS.y; count++; }
-        if (rightS && rightS.score > 0.3) { ySum += rightS.y; count++; }
-
+        
+        // Use a lower confidence threshold for tracking to be more forgiving
+        if (nose && nose.score > 0.2) { ySum += nose.y; count++; }
+        if (leftS && leftS.score > 0.2) { ySum += leftS.y; count++; }
+        if (rightS && rightS.score > 0.2) { ySum += rightS.y; count++; }
+        
         if (count > 0) {
+            // UPDATED: Faster smoothing (0.6/0.4 instead of 0.7/0.3) for better responsiveness
             const rawY = ySum / count;
-            currentY = currentY * 0.7 + rawY * 0.3; // Smooth Y
-
-            // Jump Detection
+            currentY = currentY * 0.6 + rawY * 0.4;
+            
             if (baselineY > 0) {
-                const diff = baselineY - currentY; 
-                // UI Meter
-                const pct = Math.min(100, Math.max(0, (diff / (jumpThreshold * 2)) * 100));
-                document.getElementById('jump-level').style.height = `${pct}%`;
+                const diff = baselineY - currentY;
                 
-                if (appState === STATE.PLAYING && diff > jumpThreshold) {
-                    handlePhysicalJump();
+                // Visual feedback
+                const pct = Math.min(100, Math.max(0, (diff / (jumpThreshold * 1.5)) * 100));
+                document.getElementById('jump-level').style.height = `${pct}%`;
+
+                // Logic inside Playing State
+                if (appState === STATE.PLAYING) {
+                    // Decrease cooldown
+                    if (jumpCooldown > 0) jumpCooldown--;
+
+                    // Trigger Jump
+                    if (diff > jumpThreshold && jumpCooldown === 0) {
+                        handlePhysicalJump();
+                        // Add cooldown (approx 0.5s at 30fps) to prevent double jumps
+                        jumpCooldown = 15; 
+                    }
+
+                    // UPDATED: Adaptive Baseline
+                    // If user is standing relatively still (diff is small), slowly adjust baseline
+                    // This fixes drift if user slouches or steps back
+                    if (Math.abs(diff) < 15 && jumpCooldown === 0) {
+                        baselineY = baselineY * 0.98 + currentY * 0.02;
+                    }
                 }
             }
         }
-
-        // X Tracking (Lateral Movement) - Mainly for Hopper
-        if (nose && nose.score > 0.3) {
-            // Mirror X because CSS scales video by -1
-            let rawX = video.width - nose.x; 
-            currentX = currentX * 0.8 + rawX * 0.2; // Smooth X
-        }
+        if (nose && nose.score > 0.3) currentX = currentX * 0.8 + (video.width - nose.x) * 0.2;
     }
 
     function enterCalibration() {
@@ -610,7 +523,6 @@
         document.getElementById('calibration-screen').style.display = 'flex';
         const statusEl = document.getElementById('calib-status');
         const btn = document.getElementById('start-calib-btn');
-
         const checkInterval = setInterval(() => {
             if (pose) {
                 statusEl.innerText = "Person Detected!";
@@ -622,22 +534,19 @@
                 btn.classList.add('hidden');
             }
         }, 500);
-
         btn.onclick = () => {
             clearInterval(checkInterval);
             statusEl.innerText = "Stand Still!";
             btn.classList.add('hidden');
-            
             let readings = [];
-            const calibInterval = setInterval(() => {
-                if (pose) readings.push(currentY);
-            }, 50);
-
+            const calibInterval = setInterval(() => { if (pose) readings.push(currentY); }, 50);
             setTimeout(() => {
                 clearInterval(calibInterval);
                 if (readings.length > 0) {
                     baselineY = readings.reduce((a,b)=>a+b) / readings.length;
-                    jumpThreshold = Math.max(20, video.height * 0.08); 
+                    // UPDATED: Slightly more sensitive threshold calculation
+                    // Uses 7% of video height instead of 8%, minimum 15px
+                    jumpThreshold = Math.max(15, video.height * 0.07); 
                     startGame();
                 } else {
                     statusEl.innerText = "Failed. Try again.";
@@ -652,290 +561,215 @@
         document.getElementById('calibration-screen').style.display = 'none';
         document.getElementById('hud').style.display = 'block';
         document.getElementById('jump-meter').style.display = 'block';
-        
-        score = 0;
-        level = 1;
-        calories = 0.0;
+        score = 0; level = 1; calories = 0.0;
         updateHUD();
-
-        if (selectedGameMode === 'runner') {
-            initRunner();
-        } else {
-            initHopper();
-        }
+        if (selectedGameMode === 'runner') initRunner();
+        else initHopper();
     }
 
     function handlePhysicalJump() {
         calories += 0.2;
         updateHUD();
-
         if (selectedGameMode === 'runner') {
-            if (runnerPlayer.isGrounded) {
-                runnerPlayer.dy = -runnerPlayer.jumpForce;
-                runnerPlayer.isGrounded = false;
-            }
+            if (runnerPlayer.isGrounded) { runnerPlayer.dy = -runnerPlayer.jumpForce; runnerPlayer.isGrounded = false; }
         } else if (selectedGameMode === 'hopper') {
-            // In Hopper, user controls jump timing
-            if (hopperPlayer.isGrounded) {
-                hopperPlayer.dy = -18; // Fixed jump force
-                hopperPlayer.isGrounded = false;
-            }
+            if (hopperPlayer.isGrounded) { hopperPlayer.dy = -18; hopperPlayer.isGrounded = false; }
         }
     }
 
-    /**
-     * GAME MODE: RUNNER
-     */
     function initRunner() {
         gameSpeed = LEVELS[1].speed;
         obstacles = [];
         runnerPlayer.y = runnerPlayer.groundY;
         runnerPlayer.dy = 0;
         runnerFrame = 0;
+        groundOffset = 0;
+        mountainOffset = 0;
     }
 
     function updateRunner() {
-        // Physics
         runnerPlayer.dy += runnerPlayer.gravity;
         runnerPlayer.y += runnerPlayer.dy;
-        if (runnerPlayer.y > runnerPlayer.groundY) {
-            runnerPlayer.y = runnerPlayer.groundY;
-            runnerPlayer.dy = 0;
-            runnerPlayer.isGrounded = true;
-        }
+        if (runnerPlayer.y > runnerPlayer.groundY) { runnerPlayer.y = runnerPlayer.groundY; runnerPlayer.dy = 0; runnerPlayer.isGrounded = true; }
 
-        // Spawning
+        groundOffset = (groundOffset + gameSpeed) % 100;
+        mountainOffset = (mountainOffset + gameSpeed * 0.2) % 1000; // Slower parallax
+
+        // Warp Speed Lines
+        bgParticles.forEach(p => {
+            p.x -= gameSpeed * 0.8 * p.s; // Faster background particles
+            if(p.x < -200) {
+                p.x = canvas.width + 100;
+                p.y = Math.random() * (canvas.height - 100);
+            }
+        });
+
         runnerFrame++;
-        let spawnRate = Math.max(50, 150 - (level * 10) - (score/2));
+        let spawnRate = Math.max(35, 90 - (level * 8) - (score/2));
         if (runnerFrame % Math.floor(spawnRate) === 0) {
             const type = Math.random() > (0.6 - (level * 0.05)) ? 'rock' : 'bird';
             obstacles.push({
                 x: canvas.width,
-                // Lowered bird obstacle so users can jump over it properly
                 y: type === 'bird' ? runnerPlayer.groundY - 50 : runnerPlayer.groundY, 
-                width: 50,
-                height: 50,
-                type: type,
-                passed: false
+                width: 50, height: 50, type: type, passed: false
             });
         }
 
-        // Obstacles
         for (let i = obstacles.length - 1; i >= 0; i--) {
             let obs = obstacles[i];
             obs.x -= gameSpeed;
-
-            // Collision
             const pHit = {x: 100 + 10, y: runnerPlayer.y - runnerPlayer.size + 10, w: runnerPlayer.size - 20, h: runnerPlayer.size - 20};
             const oHit = {x: obs.x + 5, y: obs.y - obs.height + 5, w: obs.width - 10, h: obs.height - 10};
-
-            if (pHit.x < oHit.x + oHit.w && pHit.x + pHit.w > oHit.x &&
-                pHit.y < oHit.y + oHit.h && pHit.y + pHit.h > oHit.y) {
-                gameOver();
-            }
-
-            // Scoring
-            if (!obs.passed && obs.x + obs.width < 100) {
-                score++;
-                obs.passed = true;
-                checkLevelUp();
-                updateHUD();
-            }
+            if (pHit.x < oHit.x + oHit.w && pHit.x + pHit.w > oHit.x && pHit.y < oHit.y + oHit.h && pHit.y + pHit.h > oHit.y) gameOver();
+            if (!obs.passed && obs.x + obs.width < 100) { score++; obs.passed = true; checkLevelUp(); updateHUD(); }
             if (obs.x + obs.width < 0) obstacles.splice(i, 1);
         }
     }
 
     function drawRunner() {
-        // Floor
-        ctx.fillStyle = '#4b5563';
+        // Clear canvas so the underlying webcam is visible!
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. Semi-transparent Space Sky tint
+        // Instead of solid fill, we use a transparent fill so the webcam shows through
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, 'rgba(15, 23, 42, 0.7)'); // Dark blue, transparent
+        gradient.addColorStop(1, 'rgba(49, 46, 129, 0.7)'); 
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 2. Parallax Mountains
+        ctx.fillStyle = '#1e1b4b'; // Dark silhouette
+        ctx.beginPath();
+        mountains.forEach(m => {
+            let drawX = m.x - mountainOffset;
+            if(drawX < -300) m.x += 3200; // recycle mountains
+            ctx.lineTo(drawX, canvas.height - 100); // bottom
+            ctx.lineTo(drawX + m.w/2, canvas.height - 100 - m.h); // peak
+            ctx.lineTo(drawX + m.w, canvas.height - 100);
+        });
+        ctx.fill();
+
+        // 3. Warp Speed Lines
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        bgParticles.forEach(p => {
+            // Stretch based on speed
+            ctx.fillRect(p.x, p.y, p.w + (gameSpeed * 3), 2);
+        });
+
+        // 4. Moving Ground
+        ctx.fillStyle = '#334155';
         ctx.fillRect(0, runnerPlayer.groundY, canvas.width, canvas.height - runnerPlayer.groundY);
+        ctx.fillStyle = '#475569'; 
+        for (let i = -100; i < canvas.width; i += 100) {
+            let startX = i - groundOffset;
+            ctx.beginPath();
+            ctx.moveTo(startX, runnerPlayer.groundY);
+            ctx.lineTo(startX + 60, runnerPlayer.groundY); // Wider stripes for speed
+            ctx.lineTo(startX + 20, canvas.height);
+            ctx.lineTo(startX - 40, canvas.height);
+            ctx.fill();
+        }
+
         const levelColors = ['#22c55e', '#22c55e', '#eab308', '#f97316', '#ef4444'];
         ctx.fillStyle = levelColors[Math.min(level-1, 4)]; 
-        ctx.fillRect(0, runnerPlayer.groundY, canvas.width, 20);
+        ctx.fillRect(0, runnerPlayer.groundY, canvas.width, 10);
 
-        // Player Body
+        // 5. Player
         ctx.fillStyle = selectedCharacter.color;
         let stretch = 0;
         if (!runnerPlayer.isGrounded) stretch = 10;
         else if (Math.abs(runnerPlayer.dy) > 1) stretch = -5;
         const pH = runnerPlayer.size + stretch;
         const pW = runnerPlayer.size - stretch;
-        
         const px = 100 + (runnerPlayer.size - pW)/2;
         const py = runnerPlayer.y - pH;
-        
+        // Draw white outline so character pops against space background
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(px, py, pW, pH);
         ctx.fillRect(px, py, pW, pH);
 
-        // Character Specific Details
+        // Character Details
         if (selectedCharacter.type === 'default') {
-            // Eyes
-            ctx.fillStyle = 'black';
-            ctx.fillRect(px + pW - 15, py + 10, 5, 5);
-            ctx.fillRect(px + pW - 35, py + 10, 5, 5);
-            // Headband
-            ctx.fillStyle = '#ef4444';
-            ctx.fillRect(px, py + 5, pW, 5);
-        } 
-        else if (selectedCharacter.type === 'ninja') {
-            // Visor (Red)
-            ctx.fillStyle = '#ef4444';
-            ctx.fillRect(px + 5, py + 12, pW - 10, 8);
-        }
-        else if (selectedCharacter.type === 'alien') {
-            // Big Black Eyes
-            ctx.fillStyle = 'black';
-            ctx.beginPath();
-            ctx.ellipse(px + pW - 15, py + 15, 6, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(px + pW - 35, py + 15, 6, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        else if (selectedCharacter.type === 'punk') {
-            // Mohawk
-            ctx.fillStyle = '#ec4899'; // Pink
-            ctx.beginPath();
-            ctx.moveTo(px + pW/2 - 5, py);
-            ctx.lineTo(px + pW/2 + 5, py);
-            ctx.lineTo(px + pW/2, py - 15);
-            ctx.fill();
-             // Eyes
-            ctx.fillStyle = 'black';
-            ctx.fillRect(px + pW - 15, py + 10, 5, 5);
-            ctx.fillRect(px + pW - 35, py + 10, 5, 5);
+            ctx.fillStyle = 'black'; ctx.fillRect(px + pW - 15, py + 10, 5, 5); ctx.fillRect(px + pW - 35, py + 10, 5, 5);
+            ctx.fillStyle = '#ef4444'; ctx.fillRect(px, py + 5, pW, 5);
+        } else if (selectedCharacter.type === 'ninja') {
+            ctx.fillStyle = '#ef4444'; ctx.fillRect(px + 5, py + 12, pW - 10, 8);
+        } else if (selectedCharacter.type === 'alien') {
+            ctx.fillStyle = 'black'; ctx.beginPath(); ctx.ellipse(px + pW - 15, py + 15, 6, 8, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(px + pW - 35, py + 15, 6, 8, 0, 0, Math.PI * 2); ctx.fill();
+        } else if (selectedCharacter.type === 'punk') {
+            ctx.fillStyle = '#ec4899'; ctx.beginPath(); ctx.moveTo(px + pW/2 - 5, py); ctx.lineTo(px + pW/2 + 5, py); ctx.lineTo(px + pW/2, py - 15); ctx.fill();
+            ctx.fillStyle = 'black'; ctx.fillRect(px + pW - 15, py + 10, 5, 5); ctx.fillRect(px + pW - 35, py + 10, 5, 5);
         }
 
-        // Obstacles
+        // 6. Obstacles
         obstacles.forEach(obs => {
             if (obs.type === 'rock') {
-                ctx.fillStyle = '#dc2626'; // Red Rock
-                ctx.beginPath();
-                ctx.moveTo(obs.x, obs.y);
-                ctx.lineTo(obs.x + obs.width/2, obs.y - obs.height);
-                ctx.lineTo(obs.x + obs.width, obs.y);
-                ctx.fill();
+                ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.moveTo(obs.x, obs.y); ctx.lineTo(obs.x + obs.width/2, obs.y - obs.height); ctx.lineTo(obs.x + obs.width, obs.y); ctx.fill();
             } else {
-                ctx.fillStyle = '#ef4444'; // Red Rectangle (Bird)
-                ctx.fillRect(obs.x, obs.y - obs.height, obs.width, obs.height/2);
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(obs.x, obs.y - obs.height, obs.width, obs.height/2);
             }
         });
     }
 
-    /**
-     * GAME MODE: SKY HOPPER
-     */
     function initHopper() {
-        hopperPlayer.y = canvas.height - 150;
-        hopperPlayer.x = canvas.width / 2;
-        hopperPlayer.dy = 0;
-        hopperPlayer.isGrounded = false;
-        cameraY = 0;
-        
-        // Generate initial platforms
-        platforms = [];
-        // Ground platform
-        platforms.push({x: 0, y: canvas.height - 50, w: canvas.width, h: 50});
-        
-        // Generate random platforms going up
-        for (let i = 1; i < 20; i++) {
-            spawnPlatform(canvas.height - 50 - (i * 120));
-        }
+        hopperPlayer.y = canvas.height - 150; hopperPlayer.x = canvas.width / 2; hopperPlayer.dy = 0; hopperPlayer.isGrounded = false; cameraY = 0;
+        platforms = []; platforms.push({x: 0, y: canvas.height - 50, w: canvas.width, h: 50});
+        for (let i = 1; i < 20; i++) spawnPlatform(canvas.height - 50 - (i * 120));
     }
 
     function spawnPlatform(y) {
-        const w = Math.random() * 100 + 100; // width 100-200
-        const x = Math.random() * (canvas.width - w);
+        const w = Math.random() * 100 + 100; const x = Math.random() * (canvas.width - w);
         platforms.push({x, y, w, h: 20});
     }
 
     function updateHopper() {
-        // Horizontal Movement (Mapped to Body)
-        // Map currentX (0-640 video space) to Canvas Width
         const targetX = (currentX / video.width) * canvas.width;
-        // Lerp for smoothness
         hopperPlayer.x = hopperPlayer.x * 0.9 + targetX * 0.1;
-
-        // Physics
-        hopperPlayer.dy += 0.6; // Gravity
-        hopperPlayer.y += hopperPlayer.dy;
-
-        // Platform Collision
+        hopperPlayer.dy += 0.6; hopperPlayer.y += hopperPlayer.dy;
         hopperPlayer.isGrounded = false;
-        if (hopperPlayer.dy > 0) { // Only check when falling
+        if (hopperPlayer.dy > 0) {
             platforms.forEach(p => {
-                if (hopperPlayer.y + hopperPlayer.height > p.y &&
-                    hopperPlayer.y < p.y + p.h &&
-                    hopperPlayer.x + hopperPlayer.width > p.x &&
-                    hopperPlayer.x < p.x + p.w) {
-                        // Landed
-                        hopperPlayer.isGrounded = true;
-                        hopperPlayer.dy = 0;
-                        hopperPlayer.y = p.y - hopperPlayer.height;
+                if (hopperPlayer.y + hopperPlayer.height > p.y && hopperPlayer.y < p.y + p.h && hopperPlayer.x + hopperPlayer.width > p.x && hopperPlayer.x < p.x + p.w) {
+                    hopperPlayer.isGrounded = true; hopperPlayer.dy = 0; hopperPlayer.y = p.y - hopperPlayer.height;
                 }
             });
         }
-
-        // Camera Scroll / Infinite Generation
         const threshold = canvas.height * 0.4;
         if (hopperPlayer.y < threshold) {
-            const diff = threshold - hopperPlayer.y;
-            hopperPlayer.y += diff;
-            platforms.forEach(p => p.y += diff);
-            score += Math.floor(diff/10); // Score based on height
-            updateHUD();
-            
-            // Remove old platforms
+            const diff = threshold - hopperPlayer.y; hopperPlayer.y += diff; platforms.forEach(p => p.y += diff);
+            score += Math.floor(diff/10); updateHUD();
             platforms = platforms.filter(p => p.y < canvas.height);
-            // Add new platforms
             const highestP = platforms.reduce((min, p) => p.y < min ? p.y : min, canvas.height);
-            if (highestP > 100) {
-                spawnPlatform(highestP - 120);
-            }
+            if (highestP > 100) spawnPlatform(highestP - 120);
         }
-
-        // Death Check
-        if (hopperPlayer.y > canvas.height) {
-            gameOver();
-        }
+        if (hopperPlayer.y > canvas.height) gameOver();
     }
 
     function drawHopper() {
-        // Draw Platforms
-        ctx.fillStyle = '#60a5fa'; // Blue platforms
-        platforms.forEach(p => {
-            ctx.fillRect(p.x, p.y, p.w, p.h);
-            // Detail
-            ctx.fillStyle = '#2563eb';
-            ctx.fillRect(p.x, p.y + p.h - 5, p.w, 5);
-            ctx.fillStyle = '#60a5fa'; // Reset
-        });
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw Player (Using default style for Hopper for now)
-        ctx.fillStyle = '#facc15';
-        ctx.fillRect(hopperPlayer.x, hopperPlayer.y, hopperPlayer.width, hopperPlayer.height);
+        // Semi-transparent Space Background for Hopper too
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, 'rgba(15, 23, 42, 0.7)'); 
+        gradient.addColorStop(1, 'rgba(49, 46, 129, 0.7)'); 
+        ctx.fillStyle = gradient; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Eyes
-        ctx.fillStyle = 'black';
-        ctx.fillRect(hopperPlayer.x + 10, hopperPlayer.y + 10, 5, 5);
-        ctx.fillRect(hopperPlayer.x + 25, hopperPlayer.y + 10, 5, 5);
+        ctx.fillStyle = '#60a5fa'; platforms.forEach(p => { ctx.fillRect(p.x, p.y, p.w, p.h); ctx.fillStyle = '#2563eb'; ctx.fillRect(p.x, p.y + p.h - 5, p.w, 5); ctx.fillStyle = '#60a5fa'; });
+        ctx.fillStyle = '#facc15'; ctx.fillRect(hopperPlayer.x, hopperPlayer.y, hopperPlayer.width, hopperPlayer.height);
+        ctx.fillStyle = 'black'; ctx.fillRect(hopperPlayer.x + 10, hopperPlayer.y + 10, 5, 5); ctx.fillRect(hopperPlayer.x + 25, hopperPlayer.y + 10, 5, 5);
     }
-
-
-    /**
-     * SHARED GAME LOGIC
-     */
 
     function checkLevelUp() {
         const nextLevel = level + 1;
-        if (score >= level * 20 && LEVELS[nextLevel]) { // Slower leveling
-            level = nextLevel;
-            gameSpeed = LEVELS[level].speed;
-            
-            const msg = document.getElementById('level-up-msg');
-            msg.innerText = `LEVEL ${level}!`;
-            msg.classList.remove('animate-level-up');
-            void msg.offsetWidth;
-            msg.classList.add('animate-level-up');
+        if (score >= level * 20 && LEVELS[nextLevel]) {
+            level = nextLevel; gameSpeed = LEVELS[level].speed;
+            const msg = document.getElementById('level-up-msg'); msg.innerText = `LEVEL ${level}!`;
+            msg.classList.remove('animate-level-up'); void msg.offsetWidth; msg.classList.add('animate-level-up');
             updateHUD();
         }
     }
@@ -945,61 +779,37 @@
             if (selectedGameMode === 'runner') updateRunner();
             else updateHopper();
         }
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw Calibration Line
+        
+        // Removed clearRect here because drawRunner/drawHopper handle it to preserve transparency correctly
+        
         if (appState === STATE.CALIBRATION && pose) {
-            const videoRatio = canvas.width / video.width;
-            const drawY = currentY * videoRatio; 
-            ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, drawY);
-            ctx.lineTo(canvas.width, drawY);
-            ctx.stroke();
+            // Re-clear to show calibration line clearly over webcam
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const videoRatio = canvas.width / video.width; const drawY = currentY * videoRatio; 
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, drawY); ctx.lineTo(canvas.width, drawY); ctx.stroke();
         }
-
         if (selectedGameMode === 'runner') drawRunner();
         else if (appState === STATE.PLAYING || appState === STATE.GAMEOVER) drawHopper();
-        
         requestAnimationFrame(gameLoop);
     }
 
     function gameOver() {
         appState = STATE.GAMEOVER;
-        if (score > highscore) {
-            highscore = score;
-            localStorage.setItem('jumpfit_highscore', highscore);
-        }
-        document.getElementById('final-score').innerText = score;
-        document.getElementById('final-level').innerText = level;
-        document.getElementById('final-calories').innerText = calories.toFixed(1) + ' kcal';
-        document.getElementById('highscore').innerText = highscore;
-        document.getElementById('game-over-screen').style.display = 'flex';
-        document.getElementById('jump-meter').style.display = 'none';
+        if (score > highscore) { highscore = score; localStorage.setItem('jumpfit_highscore', highscore); }
+        document.getElementById('final-score').innerText = score; document.getElementById('final-level').innerText = level; document.getElementById('final-calories').innerText = calories.toFixed(1) + ' kcal'; document.getElementById('highscore').innerText = highscore;
+        document.getElementById('game-over-screen').style.display = 'flex'; document.getElementById('jump-meter').style.display = 'none';
     }
 
     function updateHUD() {
-        document.getElementById('score').innerText = score;
-        document.getElementById('level').innerText = level;
-        document.getElementById('calories').innerText = calories.toFixed(1);
-        document.getElementById('highscore').innerText = highscore;
+        document.getElementById('score').innerText = score; document.getElementById('level').innerText = level; document.getElementById('calories').innerText = calories.toFixed(1); document.getElementById('highscore').innerText = highscore;
     }
 
-    // Event Listeners
-    document.getElementById('menu-btn').addEventListener('click', () => {
-        showMenu(); 
-    });
-
-    // Handle initial load
+    document.getElementById('menu-btn').addEventListener('click', () => showMenu());
     window.onload = () => {
         const saved = localStorage.getItem('jumpfit_highscore');
         if (saved) highscore = parseInt(saved);
-        updateHUD();
-        init();
+        updateHUD(); init();
     };
-
 </script>
 </body>
 </html>
